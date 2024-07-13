@@ -28,5 +28,7 @@ func SetUpRouter(s *server.Server) *gin.Engine {
 
 	r.GET("api/amm/order/list", s.GetOrderList)
 
+	r.GET("api/amm/estimate", s.EstimateSwapResult)
+
 	return r
 }

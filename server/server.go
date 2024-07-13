@@ -3,15 +3,18 @@ package server
 import (
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"math/big"
 	"net/http"
+	"sse_brussels_node/abi"
 	"sse_brussels_node/model"
 	"strconv"
 )
 
 type Server struct {
+	AMM                 *abi.AMM
 	DB                  *gorm.DB
 	BasicTokenSymbol    string
 	BasicTokenDecimals  *big.Float
@@ -78,6 +81,30 @@ func (s *Server) GetTxStatus(c *gin.Context) {
 	})
 }
 
+func (s *Server) EstimateSwapResult(c *gin.Context) {
+	_targetTokenAmount, _ := big.NewInt(0).SetString(c.Query("targetTokenAmount"), 10)
+	_basicTokenAmount, _ := big.NewInt(0).SetString(c.Query("basicTokenAmount"), 10)
+	_sellType, _ := strconv.Atoi(c.Query("sellType"))
+
+	downA, normalA, upA, err := s.AMM.SwapResultOfTargetAmount(&bind.CallOpts{}, _targetTokenAmount, _basicTokenAmount, uint8(_sellType))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Request is invalid")})
+	}
+
+	var r EstimateResult
+	_downA := big.NewFloat(0).SetInt(downA)
+	r.TokenOutDownBound, _ = _downA.Quo(_downA, big.NewFloat(1000000000000000000)).Float64()
+
+	_upA := big.NewFloat(0).SetInt(upA)
+	r.TokenOutUpBound, _ = _upA.Quo(_upA, big.NewFloat(1000000000000000000)).Float64()
+
+	_normalA := big.NewFloat(0).SetInt(normalA)
+	r.TokenOutNormal, _ = _normalA.Quo(_normalA, big.NewFloat(1000000000000000000)).Float64()
+	c.JSON(http.StatusOK, gin.H{
+		"estimate": r,
+	})
+}
+
 func (s *Server) dealWithOrderToResp(order model.Order) (*OrderDetail, error) {
 	var res = &OrderDetail{
 		User:     order.User,
@@ -139,4 +166,10 @@ type OrderDetail struct {
 	TokenOutFinal       float64
 	Status              uint8
 	Rate                float64
+}
+
+type EstimateResult struct {
+	TokenOutDownBound float64
+	TokenOutUpBound   float64
+	TokenOutNormal    float64
 }

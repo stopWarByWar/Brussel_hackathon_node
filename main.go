@@ -32,20 +32,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	go startProcess(_conf, _db)
-
-	s := new(server.Server)
-	s.DB = _db
-	s.BasicTokenSymbol = _conf.BasicTokenSymbol
-	s.BasicTokenDecimals, _ = big.NewFloat(0).SetString(_conf.BasicTokenDecimals)
-	s.TargetTokenSymbol = _conf.TargetTokenSymbol
-	s.TargetTokenDecimals, _ = big.NewFloat(0).SetString(_conf.TargetTokenDecimals)
-
-	r := router.SetUpRouter(s)
-	r.Run(fmt.Sprintf(":%s", _conf.Port))
-}
-
-func startProcess(_conf *conf.Conf, _db *gorm.DB) {
 
 	var lv logrus.Level
 
@@ -75,5 +61,16 @@ func startProcess(_conf *conf.Conf, _db *gorm.DB) {
 	}
 
 	p := processor.New(_db, _logger, ethCli, _conf.AMMAddr, _conf.FetchBlockInterval, _conf.Signer, _conf.ChainID, _conf.StartBlock)
-	p.Process(time.Duration(_conf.FetchInterval * 1_000_000_000))
+	go p.Process(time.Duration(_conf.FetchInterval * 1_000_000_000))
+
+	s := new(server.Server)
+	s.DB = _db
+	s.BasicTokenSymbol = _conf.BasicTokenSymbol
+	s.BasicTokenDecimals, _ = big.NewFloat(0).SetString(_conf.BasicTokenDecimals)
+	s.TargetTokenSymbol = _conf.TargetTokenSymbol
+	s.TargetTokenDecimals, _ = big.NewFloat(0).SetString(_conf.TargetTokenDecimals)
+	s.AMM = p.GetAMM()
+
+	r := router.SetUpRouter(s)
+	r.Run(fmt.Sprintf(":%s", _conf.Port))
 }

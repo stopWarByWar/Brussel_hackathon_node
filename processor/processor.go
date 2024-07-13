@@ -194,3 +194,7 @@ func (p *Processor) dealWithEvent(e types.Log) error {
 	p.index = e.Index
 	return nil
 }
+
+func (p *Processor) GetAMM() *abi.AMM {
+	return p.amm
+}
