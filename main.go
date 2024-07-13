@@ -32,7 +32,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//go startProcess(_conf, _db)
+	go startProcess(_conf, _db)
 
 	s := new(server.Server)
 	s.DB = _db
