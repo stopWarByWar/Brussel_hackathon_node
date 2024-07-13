@@ -1,0 +1,1 @@
+2024-07-13T17:08:08+08:00[36m [INFO] [req id:61870037408338946564793497893648936110141390848617097113496047032411537797359] [tx:0x50d71e434153f56f2e8d9ce2cf3293755e044e8861f8f3ba26c1aba9de9921fe] [0msettle order (/Users/pan/work/sse/brussels/node/processor/handler.go:51 sse_brussels_node/processor.(*Processor).dealWithGetRandomEvent)
